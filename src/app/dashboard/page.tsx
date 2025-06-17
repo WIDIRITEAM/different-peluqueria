@@ -2,7 +2,6 @@
 
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import MetricCard from '@/components/dashboard/MetricCard';
 import IngresosCard from './components/IngresosCard';
 import ServiciosRecientesCard from './components/ServiciosRecientesCard';
 import ServiciosPopularesCard from './components/ServiciosPopularesCard';
@@ -18,10 +17,9 @@ import {
 import { useDashboardMetrics, useServiceStats, useEmpleadaNombre } from '@/lib/hooks/useDashboard';
 import { formatCurrency } from '@/lib/utils';
 import { empleadas } from '@/lib/mock-data';
-import { useState, useEffect } from 'react';
+import { useState} from 'react';
 
 const DashboardContent = () => {
-  const { getFilteredData } = useDateFilter();
   const [currentFilter, setCurrentFilter] = useState<{ month?: string }>({});
   const { obtenerNombreEmpleada } = useEmpleadaNombre();
   
@@ -149,7 +147,16 @@ const DashboardContent = () => {
             <h3 className="text-lg font-semibold text-gray-900">Resumen del Mes</h3>
             <div className="flex items-center text-sm text-rose-600">
               <TrendingUp className="w-5 h-5 mr-2" />
-              {metricsLoading ? 'Cargando...' : `${metrics?.tendenciaIngresos >= 0 ? '+' : ''}${Math.round(metrics?.tendenciaIngresos || 0)}% vs mes anterior`}
+              {metricsLoading ? (
+                'Cargando...'
+              ) : (
+                (() => {
+                  const tendencia = metrics?.tendenciaIngresos || 0;
+                  const signo = tendencia >= 0 ? '+' : '';
+                  const porcentaje = Math.round(tendencia);
+                  return `${signo}${porcentaje}% vs mes anterior`;
+                })()
+              )}
             </div>
           </div>
           

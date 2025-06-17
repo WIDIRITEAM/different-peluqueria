@@ -63,8 +63,7 @@ const LoginPage: React.FC = () => {
 
         {/* Formulario */}
         <div className="p-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Bienvenida</h2>
+          <div className="text-center mb-3">
             <p className="text-gray-600">Inicia sesión para acceder al sistema</p>
           </div>
 

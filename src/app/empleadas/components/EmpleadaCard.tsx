@@ -11,7 +11,7 @@ interface EmpleadaCardProps {
   onEliminar: (empleada: Empleada) => void;
 }
 
-const EmpleadaCard: React.FC<EmpleadaCardProps> = ({
+const EmpleadaCard: React.FC<EmpleadaCardProps> = React.memo(({
   empleada,
   metricas,
   onVerDetalles,
@@ -87,7 +87,7 @@ const EmpleadaCard: React.FC<EmpleadaCardProps> = ({
           <div className="flex flex-wrap gap-1">
             {empleada.especialidades.map((especialidad, index) => (
               <span
-                key={index}
+                key={`${empleada.id}-especialidad-${index}`}
                 className="px-2 py-1 bg-rose-100 text-rose-700 text-xs rounded-full"
               >
                 {especialidad}
@@ -115,6 +115,9 @@ const EmpleadaCard: React.FC<EmpleadaCardProps> = ({
       </div>
     </div>
   );
-};
+});
+
+// Añadir displayName para depuración
+EmpleadaCard.displayName = 'EmpleadaCard';
 
 export default EmpleadaCard; 

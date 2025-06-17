@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Plus,
   Search,
@@ -9,12 +9,15 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent} from '@/components/ui/Card';
-import { Empleada, EmpleadaFilter } from '@/lib/types';
+import { Empleada } from '@/lib/types';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import EmpleadaCard from './components/EmpleadaCard';
+import FormularioEmpleada, { FormularioEmpleadaData } from './components/FormularioEmpleada';
+import DetalleEmpleada from './components/DetalleEmpleada';
 import { useEmpleadas, useCrearEmpleada } from '@/lib/hooks/useEmpleadas';
+import { metricasEmpleadas } from '@/lib/mock-data';
 
 const EmpleadasPage: React.FC = () => {
   const [filtroRol, setFiltroRol] = useState<string>('todos');
@@ -34,22 +37,18 @@ const EmpleadasPage: React.FC = () => {
     especialidades: [] as string[]
   });
 
-  // Crear filtro para el hook
-  const filter = {
+  // Memoizar filtro para evitar re-renderizado en loop
+  const filter = useMemo(() => ({
     rol: filtroRol !== 'todos' ? filtroRol : undefined,
     busqueda: busqueda || undefined,
     activa: true
-  };
+  }), [filtroRol, busqueda]);
 
   // Hooks
   const { data: empleadas, loading, error, refetch } = useEmpleadas(filter);
   const { crearEmpleada, loading: creatingLoading } = useCrearEmpleada();
 
   const roles = ['Estilista', 'Colorista', 'Manicurista', 'Gerente'];
-
-  const obtenerMetricasEmpleada = (empleadaId: string) => {
-    return metricasEmpleadas.find(m => m.empleadaId === empleadaId);
-  };
 
   // Handlers optimizados
   const handleCrearEmpleada = useCallback(() => {
@@ -84,7 +83,7 @@ const EmpleadasPage: React.FC = () => {
     }
   }, [empleadaAEliminar, refetch]);
 
-  const handleGuardarEmpleada = useCallback(async (formData: any) => {
+  const handleGuardarEmpleada = useCallback(async (formData: FormularioEmpleadaData) => {
     const success = await crearEmpleada(formData);
     if (success) {
       setMostrarFormulario(false);
@@ -93,12 +92,20 @@ const EmpleadasPage: React.FC = () => {
     return success;
   }, [crearEmpleada, refetch]);
 
-  const handleGuardarEdicion = useCallback(() => {
+  const handleGuardarEdicion = useCallback(async (formData: FormularioEmpleadaData) => {
     console.log('Empleada editada:', formData);
     console.log('Empleada original:', empleadaEdicion);
+    // TODO: Implementar actualización real
     setMostrarEdicion(false);
     setEmpleadaEdicion(null);
-  }, [formData, empleadaEdicion]);
+    refetch();
+    return true;
+  }, [empleadaEdicion, refetch]);
+
+  // Obtener métricas de una empleada específica
+  const obtenerMetricasEmpleada = useCallback((empleadaId: string) => {
+    return metricasEmpleadas.find(m => m.empleadaId === empleadaId);
+  }, []);
 
   // Optimizar handler de especialidades para evitar rerender
   const handleEspecialidadChange = useCallback((especialidad: string, checked: boolean) => {
@@ -116,8 +123,8 @@ const EmpleadasPage: React.FC = () => {
     []
   );
 
-  // Componente de estadísticas
-  const EstadisticasEmpleadas = () => {
+  // Componente de estadísticas memoizado
+  const EstadisticasEmpleadas = React.memo(() => {
     const totalEmpleadas = empleadas?.length || 0;
     const empleadasActivas = empleadas?.filter(e => e.activa).length || 0;
     
@@ -160,10 +167,12 @@ const EmpleadasPage: React.FC = () => {
         </Card>
       </div>
     );
-  };
+  });
+  
+  EstadisticasEmpleadas.displayName = 'EstadisticasEmpleadas';
 
-  // Componente de filtros
-  const FiltrosEmpleadas = () => (
+  // Componente de filtros memoizado
+  const FiltrosEmpleadas = React.memo(() => (
     <Card className="mb-6">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
@@ -200,7 +209,9 @@ const EmpleadasPage: React.FC = () => {
         </div>
       </CardContent>
     </Card>
-  );
+  ));
+  
+  FiltrosEmpleadas.displayName = 'FiltrosEmpleadas';
 
   // Manejar estados de carga y error
   if (error) {
@@ -260,6 +271,7 @@ const EmpleadasPage: React.FC = () => {
                 <EmpleadaCard
                   key={empleada.id}
                   empleada={empleada}
+                  metricas={obtenerMetricasEmpleada(empleada.id)}
                   onVerDetalles={setEmpleadaSeleccionada}
                   onEditar={handleEditarEmpleada}
                   onEliminar={handleEliminarEmpleada}
@@ -280,19 +292,49 @@ const EmpleadasPage: React.FC = () => {
             </div>
           )}
 
+          {/* Modal de detalle de empleada */}
+          <DetalleEmpleada
+            isOpen={!!empleadaSeleccionada}
+            empleada={empleadaSeleccionada}
+            metricas={empleadaSeleccionada ? obtenerMetricasEmpleada(empleadaSeleccionada.id) : undefined}
+            onClose={() => setEmpleadaSeleccionada(null)}
+            onEditar={handleEditarEmpleada}
+          />
+
+          {/* Modal de formulario para crear empleada */}
+          <FormularioEmpleada
+            isOpen={mostrarFormulario}
+            onClose={() => setMostrarFormulario(false)}
+            onSave={handleGuardarEmpleada}
+            isEditing={false}
+          />
+
+          {/* Modal de formulario para editar empleada */}
+          <FormularioEmpleada
+            isOpen={mostrarEdicion}
+            onClose={() => {
+              setMostrarEdicion(false);
+              setEmpleadaEdicion(null);
+            }}
+            onSave={handleGuardarEdicion}
+            empleada={empleadaEdicion}
+            isEditing={true}
+          />
+
           {/* Diálogo de confirmación */}
           {mostrarConfirmacion && empleadaAEliminar && (
             <ConfirmDialog
+              isOpen={mostrarConfirmacion}
               title="Eliminar Empleada"
               message={`¿Estás seguro de que deseas eliminar a ${empleadaAEliminar.nombre} ${empleadaAEliminar.apellido}?`}
               confirmText="Eliminar"
               cancelText="Cancelar"
               onConfirm={confirmarEliminacion}
-              onCancel={() => {
+              onClose={() => {
                 setMostrarConfirmacion(false);
                 setEmpleadaAEliminar(null);
               }}
-              variant="danger"
+              isDestructive={true}
             />
           )}
         </div>
