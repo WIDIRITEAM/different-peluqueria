@@ -231,6 +231,7 @@ const FormularioEmpleada: React.FC<FormularioEmpleadaProps> = ({
               <div className="relative">
                 <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <select
+                  title="Rol"
                   value={formData.rol}
                   onChange={(e) => handleInputChange('rol', e.target.value as Empleada['rol'])}
                   className="w-full pl-10 pr-4 py-3 border border-rose-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-rose-500"

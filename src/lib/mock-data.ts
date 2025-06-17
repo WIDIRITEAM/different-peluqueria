@@ -101,7 +101,7 @@ export const servicios: Servicio[] = [
   {
     id: '2',
     fecha: '2024-01-16',
-    servicio: 'Coloración',
+    servicio: 'Color',
     precio: 85,
     nombreCliente: 'María Torres',
     empleadaId: '3',
@@ -110,7 +110,7 @@ export const servicios: Servicio[] = [
   {
     id: '3',
     fecha: '2024-01-17',
-    servicio: 'Manicura',
+    servicio: 'Manos',
     precio: 25,
     nombreCliente: 'Laura Sánchez',
     empleadaId: '4',
